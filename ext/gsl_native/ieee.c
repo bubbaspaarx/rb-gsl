@@ -25,9 +25,11 @@ static VALUE rb_gsl_ieee_fprintf_double(int argc, VALUE *argv, VALUE obj)
   VALUE vtmp;
   double ftmp;
 
-  switch (argc) {
+  switch (argc)
+  {
   case 2:
-    switch (TYPE(argv[0])) {
+    switch (TYPE(argv[0]))
+    {
     case T_STRING:
       fp = fopen(RSTRING_PTR(argv[0]), "w");
       flag = 1;
@@ -55,16 +57,26 @@ static VALUE rb_gsl_ieee_fprintf_double(int argc, VALUE *argv, VALUE obj)
              rb_class2name(CLASS_OF(vtmp)));
   ftmp = RFLOAT_VALUE(vtmp);
   gsl_ieee_fprintf_double(fp, &ftmp);
-  if (fp == stdout) fprintf(stdout, "\n");
-  if (flag == 1) fclose(fp);
+  if (fp == stdout)
+    fprintf(stdout, "\n");
+  if (flag == 1)
+    fclose(fp);
   return obj;
 }
 
-static VALUE rb_gsl_ieee_printf_double(VALUE obj, VALUE xx)
+static VALUE rb_gsl_ieee_printf_double(int argc, VALUE *argv, VALUE self)
 {
-  double x;
-  x = NUM2DBL(xx);
+  VALUE xx;
+
+  if (argc != 1)
+  {
+    rb_raise(rb_eArgError, "wrong number of arguments (%d for 1)", argc);
+  }
+
+  xx = argv[0];
+  double x = NUM2DBL(xx);
   gsl_ieee_printf_double(&x);
+
   return xx;
 }
 
@@ -84,5 +96,4 @@ void Init_gsl_ieee(VALUE module)
                              rb_gsl_ieee_printf_double, -1);
   rb_define_singleton_method(mgsl_ieee, "printf_double",
                              rb_gsl_ieee_printf_double, -1);
-
 }

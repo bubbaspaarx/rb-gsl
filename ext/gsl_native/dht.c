@@ -78,7 +78,7 @@ static VALUE rb_gsl_dht_apply(int argc, VALUE *argv, VALUE obj)
       NM_DENSE_STORAGE *nm;
       nm = NM_STORAGE_DENSE(argv[0]);
       ptr1 = (double*)nm->elements;
-      ary = rb_nmatrix_dense_create(FLOAT64, nm->shape, nm->dim, nm->elements, 
+      ary = rb_nmatrix_dense_create(FLOAT64, nm->shape, nm->dim, nm->elements,
         NM_DENSE_COUNT(argv[0]));
       ptr2 = (double*)NM_DENSE_ELEMENTS(ary);
 #endif
@@ -156,7 +156,7 @@ static VALUE rb_gsl_dht_xk_sample(VALUE obj, VALUE n,
       nm = NM_STORAGE_DENSE(n);
       ptr = (int*) nm->elements;
       size = NM_DENSE_COUNT(n);
-      ary = rb_nmatrix_dense_create(FLOAT64, nm->shape, nm->dim, nm->elements, 
+      ary = rb_nmatrix_dense_create(FLOAT64, nm->shape, nm->dim, nm->elements,
         NM_DENSE_COUNT(n));
       ptr2 = (double*)NM_DENSE_ELEMENTS(ary);
       for (i = 0; i < size; i++) {
@@ -222,7 +222,7 @@ static VALUE rb_gsl_dht_sample(int argc, VALUE *argv, VALUE obj)
     mm = gsl_matrix_alloc(t->size, t->size);
     for (n = 0; n < t->size; n++) {
       for (m = 0; m < t->size; m++) {
-        val = t->j[n+1]*gsl_dht_x_sample(t, m)/t->xmax;
+        val = t->j[(int)(n+1)]*gsl_dht_x_sample(t, (int)m)/t->xmax;
         gsl_matrix_set(mm, n, m, val);
       }
     }
@@ -231,7 +231,7 @@ static VALUE rb_gsl_dht_sample(int argc, VALUE *argv, VALUE obj)
   case 2:
     n = FIX2INT(argv[0]);
     m = FIX2INT(argv[1]);
-    val = t->j[n+1]*gsl_dht_x_sample(t, m)/t->xmax;
+    val = t->j[(int)(n+1)]*gsl_dht_x_sample(t, (int)m)/t->xmax;
     return rb_float_new(val);
     break;
   default:
@@ -253,7 +253,7 @@ static VALUE rb_gsl_dht_num(int argc, VALUE *argv, VALUE obj)
     mm = gsl_matrix_alloc(t->size, t->size);
     for (n = 0; n < t->size; n++) {
       for (m = 0; m < t->size; m++) {
-        val = gsl_sf_bessel_Jnu(t->nu, t->j[n+1]*gsl_dht_x_sample(t, m)/t->xmax);
+        val = gsl_sf_bessel_Jnu(t->nu, t->j[(int)(n+1)]*gsl_dht_x_sample(t, (int)m)/t->xmax);
         gsl_matrix_set(mm, n, m, val);
       }
     }
@@ -262,7 +262,7 @@ static VALUE rb_gsl_dht_num(int argc, VALUE *argv, VALUE obj)
   case 2:
     n = FIX2INT(argv[0]);
     m = FIX2INT(argv[1]);
-    val = gsl_sf_bessel_Jnu(t->nu, t->j[n+1]*gsl_dht_x_sample(t, m)/t->xmax);
+    val = gsl_sf_bessel_Jnu(t->nu, t->j[(int)(n+1)]*gsl_dht_x_sample(t, (int)m)/t->xmax);
     return rb_float_new(val);
     break;
   default:
@@ -330,7 +330,7 @@ static VALUE rb_gsl_dht_coef(int argc, VALUE *argv, VALUE obj)
     mm = gsl_matrix_alloc(t->size, t->size);
     for (n = 0; n < t->size; n++) {
       for (m = 0; m < t->size; m++) {
-        val = gsl_sf_bessel_Jnu(t->nu, t->j[n+1]*gsl_dht_x_sample(t, m)/t->xmax);
+        val = gsl_sf_bessel_Jnu(t->nu, t->j[(int)(n+1)]*gsl_dht_x_sample(t, (int)m)/t->xmax);
         val *= (2.0/t->xmax/t->xmax)/t->J2[m+1];
         gsl_matrix_set(mm, n, m, val);
       }
@@ -340,7 +340,7 @@ static VALUE rb_gsl_dht_coef(int argc, VALUE *argv, VALUE obj)
   case 2:
     n = FIX2INT(argv[0]);
     m = FIX2INT(argv[1]);
-    val = gsl_sf_bessel_Jnu(t->nu, t->j[n+1]*gsl_dht_x_sample(t, m)/t->xmax);
+    val = gsl_sf_bessel_Jnu(t->nu, t->j[(int)(n+1)]*gsl_dht_x_sample(t, (int)m)/t->xmax);
     val *= (2.0/t->xmax/t->xmax)/t->J2[m+1];
     return rb_float_new(val);
     break;

@@ -19,12 +19,12 @@ static VALUE cgsl_error[35];
 static VALUE *pgsl_error;
 
 static void Init_rb_gsl_define_GSL_CONST(VALUE module);
-void rb_gsl_error_handler(const char *reason, const char *file,
+__attribute__((noreturn)) void rb_gsl_error_handler(const char *reason, const char *file,
                           int line, int gsl_errno);
 static void rb_gsl_my_error_handler(const char *reason, const char *file,
                                     int line, int gsl_errno);
 
-void rb_gsl_error_handler(const char *reason, const char *file,
+__attribute__((noreturn)) void rb_gsl_error_handler(const char *reason, const char *file,
                           int line, int gsl_errno)
 {
   const char *emessage = gsl_strerror(gsl_errno);

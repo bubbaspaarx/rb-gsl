@@ -10,6 +10,7 @@
 */
 
 #include "include/rb_gsl_fft.h"
+#include <gsl/gsl_version.h>
 
 VALUE mgsl_fft;
 VALUE cgsl_fft_wavetable;
@@ -42,12 +43,11 @@ static VALUE rb_gsl_fft_halfcomplex_wavetable_new(VALUE klass, VALUE n)
   CHECK_FIXNUM(n);
   return Data_Wrap_Struct(klass, 0, gsl_fft_halfcomplex_wavetable_free,
                           gsl_fft_halfcomplex_wavetable_alloc(FIX2INT(n)));
-
 }
 
 static void GSL_FFT_Wavetable_free(GSL_FFT_Wavetable *table)
 {
-  gsl_fft_complex_wavetable_free((gsl_fft_complex_wavetable *) table);
+  gsl_fft_complex_wavetable_free((gsl_fft_complex_wavetable *)table);
 }
 
 static VALUE rb_gsl_fft_complex_workspace_new(VALUE klass, VALUE n)
@@ -66,7 +66,7 @@ static VALUE rb_gsl_fft_real_workspace_new(VALUE klass, VALUE n)
 
 static void GSL_FFT_Workspace_free(GSL_FFT_Workspace *space)
 {
-  gsl_fft_complex_workspace_free((gsl_fft_complex_workspace *) space);
+  gsl_fft_complex_workspace_free((gsl_fft_complex_workspace *)space);
 }
 
 // The FFT methods used to allow passing stride and n values as optional
@@ -88,8 +88,9 @@ static VALUE get_complex_stride_n(VALUE obj,
   CHECK_VECTOR_COMPLEX(obj);
   Data_Get_Struct(obj, gsl_vector_complex, v);
 
-  if(vin) *vin = v;
-  *data = (gsl_complex_packed_array) v->data;
+  if (vin)
+    *vin = v;
+  *data = (gsl_complex_packed_array)v->data;
   *stride = v->stride;
   *n = v->size;
   return obj;
@@ -97,19 +98,23 @@ static VALUE get_complex_stride_n(VALUE obj,
 
 static VALUE rb_fft_complex_radix2(VALUE obj,
                                    int (*trans)(gsl_complex_packed_array,
-                                                size_t, size_t), int flag)
+                                                size_t, size_t),
+                                   int flag)
 {
   size_t stride, n;
   gsl_complex_packed_array data;
   gsl_vector_complex *vin, *vout;
   VALUE ary;
   ary = get_complex_stride_n(obj, &vin, &data, &stride, &n);
-  if (flag == RB_GSL_FFT_COPY) {
+  if (flag == RB_GSL_FFT_COPY)
+  {
     vout = gsl_vector_complex_alloc(n);
     gsl_vector_complex_memcpy(vout, vin);
     (*trans)(vout->data, vout->stride /*1*/, vout->size /*n*/);
     return Data_Wrap_Struct(cgsl_vector_complex, 0, gsl_vector_complex_free, vout);
-  } else { /* in-place */
+  }
+  else
+  { /* in-place */
     (*trans)(data, stride, n);
     return ary;
   }
@@ -183,7 +188,6 @@ static VALUE rb_gsl_fft_complex_radix2_inverse2(VALUE obj)
   return rb_fft_complex_radix2(obj, gsl_fft_complex_radix2_inverse,
                                RB_GSL_FFT_INPLACE);
 }
-
 
 static VALUE rb_gsl_fft_complex_radix2_dif_forward2(VALUE obj)
 {
@@ -263,14 +267,15 @@ static VALUE rb_GSL_FFT_Wavetable_factor(VALUE obj)
 {
   GSL_FFT_Wavetable *table;
   gsl_vector_int *v;
-  size_t i;
   Data_Get_Struct(obj, GSL_FFT_Wavetable, table);
   v = gsl_vector_int_alloc(table->nf);
-  for (i = 0; i < table->nf; i++) gsl_vector_int_set(v, i, table->factor[i]);
+  for (size_t i = 0; i < table->nf; i++)
+    gsl_vector_int_set(v, (int)i, (int)table->factor[i]);
   return Data_Wrap_Struct(cgsl_vector_int, 0, gsl_vector_int_free, v);
 }
 
-enum {
+enum
+{
   NONE_OF_TWO = 0,
   ALLOC_SPACE = 1,
   ALLOC_TABLE = 2,
@@ -284,51 +289,56 @@ static void gsl_fft_free(int flag, GSL_FFT_Wavetable *table,
 // This can be simplified at some point.
 // See comments preceding get_complex_stride_n()
 static int gsl_fft_get_argv_complex(int argc, VALUE *argv, VALUE obj,
-                                    gsl_vector_complex ** vin,
+                                    gsl_vector_complex **vin,
                                     gsl_complex_packed_array *data, size_t *stride,
                                     size_t *n, gsl_fft_complex_wavetable **table,
                                     gsl_fft_complex_workspace **space)
 {
-  int flag = NONE_OF_TWO, flagtmp, i, itmp = argc, itmp2 = 0, ccc;
+  int flag = NONE_OF_TWO, flagtmp, i, itmp = argc, itmp2 = 0;
   int flagw = 0;
 
   CHECK_VECTOR_COMPLEX(obj);
 
-  ccc = argc;
   flagtmp = 0;
   flagw = 0;
-  for (i = argc-1; i >= itmp2; i--) {
-    if (rb_obj_is_kind_of(argv[i], cgsl_fft_complex_workspace)) {
+  for (i = argc - 1; i >= itmp2; i--)
+  {
+    if (rb_obj_is_kind_of(argv[i], cgsl_fft_complex_workspace))
+    {
       Data_Get_Struct(argv[i], gsl_fft_complex_workspace, *space);
       flagtmp = 1;
       flagw = 1;
       itmp = i;
-      ccc--;
       break;
     }
   }
   flagtmp = 0;
-  for (i = itmp-1; i >= itmp2; i--) {
-    if (rb_obj_is_kind_of(argv[i], cgsl_fft_complex_wavetable)) {
+  for (i = itmp - 1; i >= itmp2; i--)
+  {
+    if (rb_obj_is_kind_of(argv[i], cgsl_fft_complex_wavetable))
+    {
       Data_Get_Struct(argv[i], gsl_fft_complex_wavetable, *table);
       flagtmp = 1;
-      ccc--;
       break;
     }
   }
   get_complex_stride_n(obj, vin, data, stride, n);
-  if (flagw == 0) {
+  if (flagw == 0)
+  {
     *space = gsl_fft_complex_workspace_alloc(*n);
     flag += ALLOC_SPACE;
   }
-  if (flagtmp == 0) {
+  if (flagtmp == 0)
+  {
     *table = gsl_fft_complex_wavetable_alloc(*n);
     flag += ALLOC_TABLE;
   }
-  if (*table == NULL) {
+  if (*table == NULL)
+  {
     rb_raise(rb_eRuntimeError, "something wrong with wavetable");
   }
-  if (*space == NULL) {
+  if (*space == NULL)
+  {
     rb_raise(rb_eRuntimeError, "something wrong with workspace");
   }
   return flag;
@@ -340,46 +350,51 @@ static int gsl_fft_get_argv_real(int argc, VALUE *argv, VALUE obj,
                                  size_t *n, gsl_fft_real_wavetable **table,
                                  gsl_fft_real_workspace **space, int *naflag)
 {
-  int flag = NONE_OF_TWO, flagtmp, i, itmp = argc, itmp2 = 0, ccc;
+  int flag = NONE_OF_TWO, flagtmp, i, itmp = argc, itmp2 = 0;
   int flagw = 0;
   *naflag = 0;
 
   *ptr = get_ptr_double3(obj, n, stride, naflag);
 
-  ccc = argc;
   flagtmp = 0;
   flagw = 0;
-  for (i = argc-1; i >= itmp2; i--) {
-    if (rb_obj_is_kind_of(argv[i], cgsl_fft_real_workspace)) {
+  for (i = argc - 1; i >= itmp2; i--)
+  {
+    if (rb_obj_is_kind_of(argv[i], cgsl_fft_real_workspace))
+    {
       Data_Get_Struct(argv[i], gsl_fft_real_workspace, *space);
       flagtmp = 1;
       flagw = 1;
       itmp = i;
-      ccc--;
       break;
     }
   }
   flagtmp = 0;
-  for (i = itmp-1; i >= itmp2; i--) {
-    if (rb_obj_is_kind_of(argv[i], cgsl_fft_real_wavetable)) {
+  for (i = itmp - 1; i >= itmp2; i--)
+  {
+    if (rb_obj_is_kind_of(argv[i], cgsl_fft_real_wavetable))
+    {
       Data_Get_Struct(argv[i], gsl_fft_real_wavetable, *table);
       flagtmp = 1;
-      ccc--;
       break;
     }
   }
-  if (flagw == 0) {
+  if (flagw == 0)
+  {
     *space = gsl_fft_real_workspace_alloc(*n);
     flag += ALLOC_SPACE;
   }
-  if (flagtmp == 0) {
+  if (flagtmp == 0)
+  {
     *table = gsl_fft_real_wavetable_alloc(*n);
     flag += ALLOC_TABLE;
   }
-  if (*table == NULL) {
+  if (*table == NULL)
+  {
     rb_raise(rb_eRuntimeError, "something wrong with wavetable");
   }
-  if (*space == NULL) {
+  if (*space == NULL)
+  {
     rb_raise(rb_eRuntimeError, "something wrong with workspace");
   }
   return flag;
@@ -391,45 +406,50 @@ static int gsl_fft_get_argv_halfcomplex(int argc, VALUE *argv, VALUE obj,
                                         size_t *n, gsl_fft_halfcomplex_wavetable **table,
                                         gsl_fft_real_workspace **space, int *naflag)
 {
-  int flag = NONE_OF_TWO, flagtmp, i, itmp = argc, itmp2 = 0, ccc;
+  int flag = NONE_OF_TWO, flagtmp, i, itmp = argc, itmp2 = 0;
   int flagw = 0;
 
   *ptr = get_ptr_double3(obj, n, stride, naflag);
 
-  ccc = argc;
   flagtmp = 0;
   flagw = 0;
-  for (i = argc-1; i >= itmp2; i--) {
-    if (rb_obj_is_kind_of(argv[i], cgsl_fft_real_workspace)) {
+  for (i = argc - 1; i >= itmp2; i--)
+  {
+    if (rb_obj_is_kind_of(argv[i], cgsl_fft_real_workspace))
+    {
       Data_Get_Struct(argv[i], gsl_fft_real_workspace, *space);
       flagtmp = 1;
       flagw = 1;
       itmp = i;
-      ccc--;
       break;
     }
   }
   flagtmp = 0;
-  for (i = itmp-1; i >= itmp2; i--) {
-    if (rb_obj_is_kind_of(argv[i], cgsl_fft_halfcomplex_wavetable)) {
+  for (i = itmp - 1; i >= itmp2; i--)
+  {
+    if (rb_obj_is_kind_of(argv[i], cgsl_fft_halfcomplex_wavetable))
+    {
       Data_Get_Struct(argv[i], gsl_fft_halfcomplex_wavetable, *table);
       flagtmp = 1;
-      ccc--;
       break;
     }
   }
-  if (flagw == 0) {
+  if (flagw == 0)
+  {
     *space = gsl_fft_real_workspace_alloc(*n);
     flag += ALLOC_SPACE;
   }
-  if (flagtmp == 0) {
+  if (flagtmp == 0)
+  {
     *table = gsl_fft_halfcomplex_wavetable_alloc(*n);
     flag += ALLOC_TABLE;
   }
-  if (*table == NULL) {
+  if (*table == NULL)
+  {
     rb_raise(rb_eRuntimeError, "something wrong with wavetable");
   }
-  if (*space == NULL) {
+  if (*space == NULL)
+  {
     rb_raise(rb_eRuntimeError, "something wrong with workspace");
   }
   return flag;
@@ -438,7 +458,8 @@ static int gsl_fft_get_argv_halfcomplex(int argc, VALUE *argv, VALUE obj,
 static void gsl_fft_free(int flag, GSL_FFT_Wavetable *table,
                          GSL_FFT_Workspace *space)
 {
-  switch (flag) {
+  switch (flag)
+  {
   case ALLOC_TABLE:
     GSL_FFT_Wavetable_free(table);
     break;
@@ -464,22 +485,25 @@ static VALUE rb_fft_complex_trans(int argc, VALUE *argv, VALUE obj,
 {
   int flag = 0;
   // local variable "status" was defined and set, but never used
-  //int status;
+  // int status;
   size_t stride, n;
   gsl_complex_packed_array data;
   gsl_vector_complex *vin, *vout;
   gsl_fft_complex_wavetable *table = NULL;
   gsl_fft_complex_workspace *space = NULL;
   flag = gsl_fft_get_argv_complex(argc, argv, obj, &vin, &data, &stride, &n, &table, &space);
-  if (sss == RB_GSL_FFT_COPY) {
+  if (sss == RB_GSL_FFT_COPY)
+  {
     vout = gsl_vector_complex_alloc(n);
     gsl_vector_complex_memcpy(vout, vin);
     /*status =*/ (*transform)(vout->data, vout->stride /*1*/, vout->size /*n*/, table, space);
-    gsl_fft_free(flag, (GSL_FFT_Wavetable *) table, (GSL_FFT_Workspace *) space);
+    gsl_fft_free(flag, (GSL_FFT_Wavetable *)table, (GSL_FFT_Workspace *)space);
     return Data_Wrap_Struct(cgsl_vector_complex, 0, gsl_vector_complex_free, vout);
-  } else {    /* in-place */
+  }
+  else
+  { /* in-place */
     /*status =*/ (*transform)(data, stride, n, table, space);
-    gsl_fft_free(flag, (GSL_FFT_Wavetable *) table, (GSL_FFT_Workspace *) space);
+    gsl_fft_free(flag, (GSL_FFT_Wavetable *)table, (GSL_FFT_Workspace *)space);
     return obj;
   }
 }
@@ -500,20 +524,20 @@ static VALUE rb_gsl_fft_complex_transform(int argc, VALUE *argv, VALUE obj)
 {
   int flag = 0;
   // local variable "status" was defined and set, but never used
-  //int status;
+  // int status;
   size_t stride, n;
   gsl_vector_complex *vin, *vout;
   gsl_fft_direction sign;
   gsl_complex_packed_array data;
   gsl_fft_complex_wavetable *table = NULL;
   gsl_fft_complex_workspace *space = NULL;
-  CHECK_FIXNUM(argv[argc-1]);
-  sign = FIX2INT(argv[argc-1]);
-  flag = gsl_fft_get_argv_complex(argc-1, argv, obj, &vin, &data, &stride, &n, &table, &space);
+  CHECK_FIXNUM(argv[argc - 1]);
+  sign = FIX2INT(argv[argc - 1]);
+  flag = gsl_fft_get_argv_complex(argc - 1, argv, obj, &vin, &data, &stride, &n, &table, &space);
   vout = gsl_vector_complex_alloc(n);
   gsl_vector_complex_memcpy(vout, vin);
-  /*status =*/ gsl_fft_complex_transform(vout->data, stride, n, table, space, sign);
-  gsl_fft_free(flag, (GSL_FFT_Wavetable *) table, (GSL_FFT_Workspace *) space);
+  /*status =*/gsl_fft_complex_transform(vout->data, stride, n, table, space, sign);
+  gsl_fft_free(flag, (GSL_FFT_Wavetable *)table, (GSL_FFT_Workspace *)space);
   return Data_Wrap_Struct(cgsl_vector_complex, 0, gsl_vector_complex_free, vout);
 }
 
@@ -522,17 +546,17 @@ static VALUE rb_gsl_fft_complex_transform2(int argc, VALUE *argv, VALUE obj)
 {
   int flag = 0;
   // local variable "status" was defined and set, but never used
-  //int status;
+  // int status;
   size_t stride, n;
   gsl_fft_direction sign;
   gsl_complex_packed_array data;
   gsl_fft_complex_wavetable *table = NULL;
   gsl_fft_complex_workspace *space = NULL;
-  CHECK_FIXNUM(argv[argc-1]);
-  sign = FIX2INT(argv[argc-1]);
-  flag = gsl_fft_get_argv_complex(argc-1, argv, obj, NULL, &data, &stride, &n, &table, &space);
-  /*status =*/ gsl_fft_complex_transform(data, stride, n, table, space, sign);
-  gsl_fft_free(flag, (GSL_FFT_Wavetable *) table, (GSL_FFT_Workspace *) space);
+  CHECK_FIXNUM(argv[argc - 1]);
+  sign = FIX2INT(argv[argc - 1]);
+  flag = gsl_fft_get_argv_complex(argc - 1, argv, obj, NULL, &data, &stride, &n, &table, &space);
+  /*status =*/gsl_fft_complex_transform(data, stride, n, table, space, sign);
+  gsl_fft_free(flag, (GSL_FFT_Wavetable *)table, (GSL_FFT_Workspace *)space);
   return obj;
 }
 
@@ -580,7 +604,7 @@ static VALUE get_ptr_stride_n(VALUE obj,
 }
 
 static VALUE rb_fft_radix2(VALUE obj,
-                           int (*trans)(double [], size_t, size_t),
+                           int (*trans)(double[], size_t, size_t),
                            int sss)
 {
   size_t stride, n;
@@ -590,8 +614,10 @@ static VALUE rb_fft_radix2(VALUE obj,
   int flag;
   VALUE ary;
   get_ptr_stride_n(obj, &ptr1, &stride, &n, &flag);
-  if (flag == 0) {
-    if (sss == RB_GSL_FFT_COPY) {
+  if (flag == 0)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       vnew = gsl_vector_alloc(n);
       vv.vector.data = ptr1;
       vv.vector.stride = stride;
@@ -600,39 +626,53 @@ static VALUE rb_fft_radix2(VALUE obj,
       ptr2 = vnew->data;
       stride = 1;
       ary = Data_Wrap_Struct(cgsl_vector, 0, gsl_vector_free, vnew);
-    } else {
+    }
+    else
+    {
       ary = obj;
       ptr2 = ptr1;
     }
 #ifdef HAVE_NARRAY_H
-  } else if (flag == 1) {
-    if (sss == RB_GSL_FFT_COPY) {
+  }
+  else if (flag == 1)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       int shape[1];
       shape[0] = n;
       ary = na_make_object(NA_DFLOAT, 1, shape, cNArray);
-      ptr2 = NA_PTR_TYPE(ary, double*);
-      memcpy(ptr2, ptr1, sizeof(double)*n);
+      ptr2 = NA_PTR_TYPE(ary, double *);
+      memcpy(ptr2, ptr1, sizeof(double) * n);
       stride = 1;
-    } else {
+    }
+    else
+    {
       ary = obj;
-      ptr2 = NA_PTR_TYPE(ary, double*);
+      ptr2 = NA_PTR_TYPE(ary, double *);
     }
 #endif
 
 #ifdef HAVE_NMATRIX_H
-  } else if (flag == 1) {
-    if (sss == RB_GSL_FFT_COPY) {
+  }
+  else if (flag == 1)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       int shape[1];
       shape[0] = n;
       ary = rb_nvector_dense_create(FLOAT64, ptr1, shape[0]);
-      ptr2 = (double*)NM_DENSE_ELEMENTS(ary);
+      ptr2 = (double *)NM_DENSE_ELEMENTS(ary);
       stride = 1;
-    } else {
+    }
+    else
+    {
       ary = obj;
-      ptr2 = (double*)NM_DENSE_ELEMENTS(ary);
+      ptr2 = (double *)NM_DENSE_ELEMENTS(ary);
     }
 #endif
-  } else {
+  }
+  else
+  {
     rb_raise(rb_eRuntimeError, "something wrong");
   }
   (*trans)(ptr2, stride, n);
@@ -678,14 +718,14 @@ static VALUE rb_gsl_fft_halfcomplex_radix2_backward2(VALUE obj)
 /*****/
 
 static VALUE rb_fft_real_trans(int argc, VALUE *argv, VALUE obj,
-                               int (*trans)(double [], size_t, size_t,
+                               int (*trans)(double[], size_t, size_t,
                                             const gsl_fft_real_wavetable *,
                                             gsl_fft_real_workspace *),
                                int sss)
 {
   int flag = 0, naflag = 0;
   // local variable "status" was defined and set, but never used
-  //int status;
+  // int status;
   size_t stride, n;
   gsl_vector *vnew;
   gsl_vector_view vv;
@@ -694,8 +734,10 @@ static VALUE rb_fft_real_trans(int argc, VALUE *argv, VALUE obj,
   gsl_fft_real_workspace *space = NULL;
   VALUE ary;
   flag = gsl_fft_get_argv_real(argc, argv, obj, &ptr1, &stride, &n, &table, &space, &naflag);
-  if (naflag == 0) {
-    if (sss == RB_GSL_FFT_COPY) {
+  if (naflag == 0)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       vnew = gsl_vector_alloc(n);
       vv.vector.data = ptr1;
       vv.vector.stride = stride;
@@ -704,43 +746,57 @@ static VALUE rb_fft_real_trans(int argc, VALUE *argv, VALUE obj,
       ptr2 = vnew->data;
       stride = 1;
       ary = Data_Wrap_Struct(cgsl_vector, 0, gsl_vector_free, vnew);
-    } else {
+    }
+    else
+    {
       ptr2 = ptr1;
       ary = obj;
     }
 #ifdef HAVE_NARRAY_H
-  } else if (naflag == 1) {
-    if (sss == RB_GSL_FFT_COPY) {
+  }
+  else if (naflag == 1)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       int shape[1];
       shape[0] = n;
       ary = na_make_object(NA_DFLOAT, 1, shape, cNArray);
-      ptr2 = NA_PTR_TYPE(ary, double*);
-      memcpy(ptr2, ptr1, sizeof(double)*n);
+      ptr2 = NA_PTR_TYPE(ary, double *);
+      memcpy(ptr2, ptr1, sizeof(double) * n);
       stride = 1;
-    } else {
+    }
+    else
+    {
       ptr2 = ptr1;
       ary = obj;
     }
 #endif
 
 #ifdef HAVE_NMATRIX_H
-  } else if (naflag == 1) {
-    if (sss == RB_GSL_FFT_COPY) {
+  }
+  else if (naflag == 1)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       int shape[1];
       shape[0] = n;
       ary = rb_nvector_dense_create(FLOAT64, ptr1, shape[0]);
-      ptr2 = (double*)NM_DENSE_ELEMENTS(ary);
+      ptr2 = (double *)NM_DENSE_ELEMENTS(ary);
       stride = 1;
-    } else {
+    }
+    else
+    {
       ptr2 = ptr1;
       ary = obj;
     }
 #endif
-  } else {
+  }
+  else
+  {
     rb_raise(rb_eRuntimeError, "something wrong");
   }
   /*status =*/ (*trans)(ptr2, stride, n, table, space);
-  gsl_fft_free(flag, (GSL_FFT_Wavetable *) table, (GSL_FFT_Workspace *) space);
+  gsl_fft_free(flag, (GSL_FFT_Wavetable *)table, (GSL_FFT_Workspace *)space);
   return ary;
 }
 
@@ -757,13 +813,13 @@ static VALUE rb_gsl_fft_real_transform2(int argc, VALUE *argv, VALUE obj)
 }
 
 static VALUE rb_fft_halfcomplex_trans(int argc, VALUE *argv, VALUE obj,
-                                      int (*trans)(double [], size_t, size_t,
+                                      int (*trans)(double[], size_t, size_t,
                                                    const gsl_fft_halfcomplex_wavetable *, gsl_fft_real_workspace *),
                                       int sss)
 {
   int flag = 0, naflag = 0;
   // local variable "status" was defined and set, but never used
-  //int status;
+  // int status;
   size_t stride, n;
   gsl_vector *vnew;
   gsl_vector_view vv;
@@ -773,8 +829,10 @@ static VALUE rb_fft_halfcomplex_trans(int argc, VALUE *argv, VALUE obj,
   VALUE ary;
   flag = gsl_fft_get_argv_halfcomplex(argc, argv, obj, &ptr1, &stride, &n,
                                       &table, &space, &naflag);
-  if (naflag == 0) {
-    if (sss == RB_GSL_FFT_COPY) {
+  if (naflag == 0)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       vnew = gsl_vector_alloc(n);
       vv.vector.data = ptr1;
       vv.vector.stride = stride;
@@ -783,43 +841,57 @@ static VALUE rb_fft_halfcomplex_trans(int argc, VALUE *argv, VALUE obj,
       ptr2 = vnew->data;
       stride = 1;
       ary = Data_Wrap_Struct(cgsl_vector, 0, gsl_vector_free, vnew);
-    } else {
+    }
+    else
+    {
       ptr2 = ptr1;
       ary = obj;
     }
 #ifdef HAVE_NARRAY_H
-  } else if (naflag == 1) {
-    if (sss == RB_GSL_FFT_COPY) {
+  }
+  else if (naflag == 1)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       int shape[1];
       shape[0] = n;
       ary = na_make_object(NA_DFLOAT, 1, shape, cNArray);
-      ptr2 = NA_PTR_TYPE(ary, double*);
-      memcpy(ptr2, ptr1, sizeof(double)*n);
+      ptr2 = NA_PTR_TYPE(ary, double *);
+      memcpy(ptr2, ptr1, sizeof(double) * n);
       stride = 1;
-    } else {
+    }
+    else
+    {
       ptr2 = ptr1;
       ary = obj;
     }
 #endif
 
 #ifdef HAVE_NMATRIX_H
-  } else if (naflag == 1) {
-    if (sss == RB_GSL_FFT_COPY) {
+  }
+  else if (naflag == 1)
+  {
+    if (sss == RB_GSL_FFT_COPY)
+    {
       int shape[1];
       shape[0] = n;
       ary = rb_nvector_dense_create(FLOAT64, ptr1, shape[0]);
-      ptr2 = (double*)NM_DENSE_ELEMENTS(ary);
+      ptr2 = (double *)NM_DENSE_ELEMENTS(ary);
       stride = 1;
-    } else {
+    }
+    else
+    {
       ptr2 = ptr1;
       ary = obj;
     }
 #endif
-  } else {
+  }
+  else
+  {
     rb_raise(rb_eRuntimeError, "something wrong");
   }
   /*status =*/ (*trans)(ptr2, stride, n, table, space);
-  gsl_fft_free(flag, (GSL_FFT_Wavetable *) table, (GSL_FFT_Workspace *) space);
+  gsl_fft_free(flag, (GSL_FFT_Wavetable *)table, (GSL_FFT_Workspace *)space);
   return ary;
 }
 
@@ -874,7 +946,7 @@ static VALUE rb_gsl_fft_real_unpack(VALUE obj)
   Data_Get_Struct(obj, gsl_vector, v);
 
   vout = gsl_vector_complex_alloc(v->size);
-  gsl_fft_real_unpack(v->data, (gsl_complex_packed_array) vout->data, v->stride, v->size);
+  gsl_fft_real_unpack(v->data, (gsl_complex_packed_array)vout->data, v->stride, v->size);
   return Data_Wrap_Struct(cgsl_vector_complex, 0, gsl_vector_complex_free, vout);
 }
 
@@ -887,7 +959,7 @@ static VALUE rb_gsl_fft_halfcomplex_unpack(VALUE obj)
   Data_Get_Struct(obj, gsl_vector, v);
 
   vout = gsl_vector_complex_alloc(v->size);
-  gsl_fft_halfcomplex_unpack(v->data, (gsl_complex_packed_array) vout->data, v->stride, v->size);
+  gsl_fft_halfcomplex_unpack(v->data, (gsl_complex_packed_array)vout->data, v->stride, v->size);
   return Data_Wrap_Struct(cgsl_vector_complex, 0, gsl_vector_complex_free, vout);
 }
 
@@ -901,11 +973,12 @@ static VALUE rb_gsl_fft_halfcomplex_to_nrc(VALUE obj)
   Data_Get_Struct(obj, gsl_vector, v);
 
   vnew = gsl_vector_alloc(v->size);
-  gsl_vector_set(vnew, 0, gsl_vector_get(v, 0));  /* DC */
-  gsl_vector_set(vnew, 1, gsl_vector_get(v, v->size/2));  /* Nyquist freq */
-  for (i = 2, k = 1; i < vnew->size; i += 2, k++) {
+  gsl_vector_set(vnew, 0, gsl_vector_get(v, 0));           /* DC */
+  gsl_vector_set(vnew, 1, gsl_vector_get(v, v->size / 2)); /* Nyquist freq */
+  for (i = 2, k = 1; i < vnew->size; i += 2, k++)
+  {
     gsl_vector_set(vnew, i, gsl_vector_get(v, k));
-    gsl_vector_set(vnew, i+1, -gsl_vector_get(v, v->size-k));
+    gsl_vector_set(vnew, i + 1, -gsl_vector_get(v, v->size - k));
   }
   return Data_Wrap_Struct(cgsl_vector, 0, gsl_vector_free, vnew);
 }
@@ -919,17 +992,18 @@ static VALUE rb_gsl_fft_halfcomplex_amp_phase(VALUE obj)
   size_t i;
   CHECK_VECTOR(obj);
   Data_Get_Struct(obj, gsl_vector, v);
-  amp = gsl_vector_alloc(v->size/2);
-  phase = gsl_vector_alloc(v->size/2);
+  amp = gsl_vector_alloc(v->size / 2);
+  phase = gsl_vector_alloc(v->size / 2);
   gsl_vector_set(amp, 0, gsl_vector_get(v, 0));
   gsl_vector_set(phase, 0, 0);
-  gsl_vector_set(amp, amp->size-1, gsl_vector_get(v, v->size-1));
-  gsl_vector_set(phase, phase->size-1, 0);
-  for (i = 1; i < v->size-1; i += 2) {
+  gsl_vector_set(amp, amp->size - 1, gsl_vector_get(v, v->size - 1));
+  gsl_vector_set(phase, phase->size - 1, 0);
+  for (i = 1; i < v->size - 1; i += 2)
+  {
     re = gsl_vector_get(v, i);
-    im = gsl_vector_get(v, i+1);
-    gsl_vector_set(amp, i/2+1, sqrt(re*re + im*im));
-    gsl_vector_set(phase, i/2+1, atan2(im, re));
+    im = gsl_vector_get(v, i + 1);
+    gsl_vector_set(amp, i / 2 + 1, sqrt(re * re + im * im));
+    gsl_vector_set(phase, i / 2 + 1, atan2(im, re));
   }
   vamp = Data_Wrap_Struct(VECTOR_ROW_COL(obj), 0, gsl_vector_free, amp);
   vphase = Data_Wrap_Struct(VECTOR_ROW_COL(obj), 0, gsl_vector_free, phase);

@@ -577,9 +577,9 @@ void Init_gsl_rng(VALUE module)
   rb_define_method(cgsl_rng, "uniform_int", rb_gsl_rng_uniform_int, 1);
 
   rb_define_method(cgsl_rng, "name", rb_gsl_rng_name, 0);
-  rb_define_method(cgsl_rng, "max", rb_gsl_rng_max, 0);
-  rb_define_method(cgsl_rng, "min", rb_gsl_rng_min, 0);
-  rb_define_method(cgsl_rng, "size", rb_gsl_rng_size, 0);
+  rb_define_method(cgsl_rng, "max", rb_gsl_rng_max, 1);
+  rb_define_method(cgsl_rng, "min", rb_gsl_rng_min, 1);
+  rb_define_method(cgsl_rng, "size", rb_gsl_rng_size, 1);
 
   rb_define_singleton_method(cgsl_rng, "types_setup", rb_gsl_rng_types_setup, 0);
   rb_define_singleton_method(cgsl_rng, "types", rb_gsl_rng_types_setup, 0);
