@@ -12,6 +12,7 @@
 #include "gsl_config.h"
 #include "include/rb_gsl.h"
 #include <gsl/gsl_machine.h>
+#include <gsl/gsl_version.h>
 
 ID rb_gsl_id_beg, rb_gsl_id_end, rb_gsl_id_excl, rb_gsl_id_to_a;
 static ID rb_gsl_id_name, rb_gsl_id_size;
@@ -27,7 +28,7 @@ static VALUE rb_gsl_object_inspect(VALUE obj)
   return rb_str_new2(buf);
 }
 
-static VALUE rb_gsl_call_rescue(VALUE obj)
+static VALUE rb_gsl_call_rescue(VALUE obj, VALUE unused)
 {
   return Qfalse;
 }
@@ -49,9 +50,11 @@ static VALUE rb_gsl_object_info(VALUE obj)
   sprintf(buf, "Class:      %s\n", rb_class2name(CLASS_OF(obj)));
   sprintf(buf, "%sSuperClass: %s\n", buf, rb_class2name(RCLASS_SUPER(CLASS_OF(obj))));
   s = rb_rescue(rb_gsl_call_name, obj, rb_gsl_call_rescue, obj);
-  if (s) sprintf(buf, "%sType:       %s\n", buf, STR2CSTR(s));
+  if (s)
+    sprintf(buf, "%sType:       %s\n", buf, STR2CSTR(s));
   s = rb_rescue(rb_gsl_call_size, obj, rb_gsl_call_rescue, obj);
-  if (s) sprintf(buf, "%sSize:       %d\n", buf, (int) FIX2INT(s));
+  if (s)
+    sprintf(buf, "%sSize:       %d\n", buf, (int)FIX2INT(s));
   return rb_str_new2(buf);
 }
 
@@ -87,7 +90,7 @@ void Init_gsl_native()
 
   Init_gsl_sort(mgsl);
 
-  Init_gsl_poly(mgsl);  /* this must be called after the Vector class defined */
+  Init_gsl_poly(mgsl); /* this must be called after the Vector class defined */
   Init_gsl_poly_int(mgsl);
   Init_gsl_poly2(mgsl);
   Init_gsl_rational(mgsl);
@@ -118,10 +121,10 @@ void Init_gsl_native()
 
   Init_gsl_odeiv(mgsl);
   Init_gsl_interp(mgsl);
-  #ifdef GSL_2_0_LATER
+#ifdef GSL_2_0_LATER
   Init_gsl_interp2d(mgsl);
   Init_gsl_spline2d(mgsl);
-  #endif
+#endif
   Init_gsl_spline(mgsl);
   Init_gsl_diff(mgsl);
   Init_gsl_deriv(mgsl);
@@ -196,22 +199,25 @@ void Init_gsl_native()
 
 static void rb_gsl_define_intern(VALUE module)
 {
-  rb_gsl_id_beg  = rb_intern("begin");
-  rb_gsl_id_end  = rb_intern("end");
+  rb_gsl_id_beg = rb_intern("begin");
+  rb_gsl_id_end = rb_intern("end");
   rb_gsl_id_excl = rb_intern("exclude_end?");
   rb_gsl_id_to_a = rb_intern("to_a");
-  rb_gsl_id_name  = rb_intern("name");
-  rb_gsl_id_size  = rb_intern("size");
+  rb_gsl_id_name = rb_intern("name");
+  rb_gsl_id_size = rb_intern("size");
 }
 
 static void rb_gsl_define_const(VALUE module)
 {
+  char version_str[10];                      // Buffer to hold the version string
+  sprintf(version_str, "%.1f", GSL_VERSION); // Convert the double to a string
+
   rb_define_const(module, "MODE_DEFAULT", INT2FIX(GSL_MODE_DEFAULT));
   rb_define_const(module, "PREC_DOUBLE", INT2FIX(GSL_PREC_DOUBLE));
   rb_define_const(module, "PREC_SINGLE", INT2FIX(GSL_PREC_SINGLE));
   rb_define_const(module, "PREC_APPROX", INT2FIX(GSL_PREC_APPROX));
-  rb_define_const(module, "VERSION", rb_str_new2(GSL_VERSION));
-  rb_define_const(module, "GSL_VERSION", rb_str_new2(GSL_VERSION));
+  rb_define_const(module, "VERSION", rb_str_new2(version_str));
+  rb_define_const(module, "GSL_VERSION", rb_str_new2(version_str));
 
   rb_define_const(module, "DBL_EPSILON", rb_float_new(GSL_DBL_EPSILON));
   rb_define_const(module, "FLT_EPSILON", rb_float_new(GSL_FLT_EPSILON));

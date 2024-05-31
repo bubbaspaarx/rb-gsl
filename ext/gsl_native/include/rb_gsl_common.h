@@ -17,7 +17,7 @@
 
 #include <ctype.h>
 #include <gsl/gsl_errno.h>
-#include <gsl/gsl_version.h>
+// #include <gsl/gsl_version.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_complex.h>
 #include <gsl/gsl_matrix.h>

@@ -73,7 +73,7 @@ VALUE rb_gsl_obj_read_only(int argc, VALUE *argv, VALUE obj)
 
 int str_tail_grep(const char *s0, const char *s1)
 {
-  int len0, len1;
+  size_t len0, len1;
   char *p = NULL;
   len0 = strlen(s0);
   len1 = strlen(s1);
@@ -83,7 +83,7 @@ int str_tail_grep(const char *s0, const char *s1)
 
 int str_head_grep(const char *s0, const char *s1)
 {
-  int len0, len1;
+  size_t len0, len1;
   size_t i, len;
   char *p0, *p1;
   len0 = strlen(s0);

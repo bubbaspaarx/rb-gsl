@@ -538,6 +538,9 @@ void Init_gsl_array(VALUE module)
   cgsl_matrix_int_view_ro = rb_define_class_under(cgsl_matrix_int_view, "ReadOnly",
                                                   cgsl_matrix_int_view);
   /*****/
+
+  void Init_gsl_vector_int(VALUE module);
+
   Init_gsl_block_init(module);
   Init_gsl_block_int_init(module);
   Init_gsl_block_uchar_init(module);
