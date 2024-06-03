@@ -40,12 +40,13 @@ static VALUE rb_gsl_bspline_knots(VALUE obj, VALUE b)
   Data_Get_Struct(obj, gsl_bspline_workspace, w);
 
 #ifdef HAVE_NMATRIX_H
-  if (NM_IsNMatrix(b)) {
+  if (NM_IsNMatrix(b))
+  {
     NM_DENSE_STORAGE *nm_bpts;
     gsl_vector_view v;
 
     nm_bpts = NM_STORAGE_DENSE(b);
-    v = gsl_vector_view_array((double*) nm_bpts->elements, NM_DENSE_COUNT(b));
+    v = gsl_vector_view_array((double *)nm_bpts->elements, NM_DENSE_COUNT(b));
     gsl_bspline_knots(&v.vector, w);
     return Data_Wrap_Struct(cgsl_vector_view_ro, 0, NULL, w->knots);
   }
@@ -61,22 +62,25 @@ static VALUE rb_gsl_bspline_knots_uniform(int argc, VALUE *argv, VALUE obj)
 {
   gsl_bspline_workspace *w;
   int argc2;
-  switch (TYPE(obj)) {
+  switch (TYPE(obj))
+  {
   case T_MODULE:
   case T_CLASS:
   case T_OBJECT:
-    if (!rb_obj_is_kind_of(argv[argc-1], cBSWS)) {
+    if (!rb_obj_is_kind_of(argv[argc - 1], cBSWS))
+    {
       rb_raise(rb_eTypeError, "Wrong argument type %s (GSL::BSpline expected)",
-               rb_class2name(CLASS_OF(argv[argc-1])));
+               rb_class2name(CLASS_OF(argv[argc - 1])));
     }
-    Data_Get_Struct(argv[argc-1], gsl_bspline_workspace, w);
-    argc2 = argc-1;
+    Data_Get_Struct(argv[argc - 1], gsl_bspline_workspace, w);
+    argc2 = argc - 1;
     break;
   default:
     Data_Get_Struct(obj, gsl_bspline_workspace, w);
     argc2 = argc;
   }
-  if (argc2 != 2) rb_raise(rb_eArgError, "Wrong number of arguments.");
+  if (argc2 != 2)
+    rb_raise(rb_eArgError, "Wrong number of arguments.");
   gsl_bspline_knots_uniform(NUM2DBL(argv[0]), NUM2DBL(argv[1]), w);
   return Data_Wrap_Struct(cgsl_vector_view_ro, 0, NULL, w->knots);
 }
@@ -89,7 +93,8 @@ static VALUE rb_gsl_bspline_eval(int argc, VALUE *argv, VALUE obj)
 
   Data_Get_Struct(obj, gsl_bspline_workspace, w);
 
-  switch (argc) {
+  switch (argc)
+  {
   case 2:
     CHECK_VECTOR(argv[1]);
     Data_Get_Struct(argv[1], gsl_vector, B);
@@ -98,7 +103,7 @@ static VALUE rb_gsl_bspline_eval(int argc, VALUE *argv, VALUE obj)
     break;
   case 1:
     x = NUM2DBL(argv[0]);
-    B = gsl_vector_alloc(w->nbreak + w->spline_order - 2);
+    B = gsl_vector_alloc(w->nbreak + w->k - 2);
     vB = Data_Wrap_Struct(cgsl_vector, 0, gsl_vector_free, B);
     break;
   default:
